@@ -1,6 +1,9 @@
 package com.sriniKafka.app;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.HashMap;
@@ -32,7 +35,22 @@ public class KafkaCon {
 			kfs = ks ;
 			
 		}
-		
+
+		public void writeFile(String msg) throws IOException{
+			
+			File file = new File("//home//srini//kafkaProg//consumeMe.txt");
+			 
+			// if file doesnt exists, then create it
+			if (!file.exists()) {
+				file.createNewFile();
+			}			
+			
+			FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+			BufferedWriter bw = new BufferedWriter(fw);
+			bw.write(msg);
+			bw.write("\n");
+			bw.close();			
+		}
 		
 		public void run() {
 			// TODO Auto-generated method stub
@@ -52,7 +70,16 @@ public class KafkaCon {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-	        		System.out.println(tnum + " hmm " + i + ": " + msgObj.getMessage());
+	        		String msgConsumed = "Consumer Thread: " + tnum + ": " + "Message num: " +msgObj.getMessage();
+	        		System.out.println(msgConsumed);
+	        		
+	        		// point it to HDFS location..
+	        		/*try {
+						writeFile(msgConsumed);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}*/
 	        		++i ;
 	        	}
 			
@@ -83,11 +110,13 @@ public class KafkaCon {
 		
 		Properties props = new Properties();
         props.put("zookeeper.connect", "192.168.125.160:2181");
-        props.put("group.id", "mygroupid2");
+        //System.out.println("GroupID: " +args[1]);
+        //String groupID = args[0];
+        props.put("group.id", "mygroupID1");
         props.put("zookeeper.session.timeout.ms", "413");
         props.put("zookeeper.sync.time.ms", "203");
         props.put("auto.commit.interval.ms", "1000");
-        // props.put("auto.offset.reset", "smallest"); 
+        props.put("auto.offset.reset", "smallest"); 
         
       
 		
@@ -95,8 +124,23 @@ public class KafkaCon {
         
         ConsumerConnector consumer = Consumer.createJavaConsumerConnector(cf) ;
         
-        //String topic = "mytopic" ;
-        String topic = "myFileMsgs" ;
+        String topic = "mytopic" ;
+        //String topic = "myFileMsgs" ;
+        
+        String hostIP = "127.0.0.1";
+        int partition = 0;
+        if(args != null && args.length > 0)
+			hostIP = args[0];
+        
+        
+			if(hostIP.equals("192.168.125.156")){
+				partition = 0;
+			}else if(hostIP.equals("192.168.125.158")){
+				partition = 1;
+			}else if(hostIP.equals("192.168.125.160")){
+				partition = 2;
+			}
+		        
         
         Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
         topicCountMap.put(topic, new Integer(3));
